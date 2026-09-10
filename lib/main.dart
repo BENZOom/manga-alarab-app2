@@ -1,25 +1,45 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MangaEmpireApp());
+  runApp(const MangaEmpireUltimateApp());
 }
 
 enum Role { owner, headAdmin, superAdmin, adminMonth, admin, translator, editor, member, guest }
+enum VipTier { none, goldDragon, emperor }
 
-class MangaEmpireApp extends StatefulWidget {
-  const MangaEmpireApp({Key? key}) : super(key: key);
+class MangaEmpireUltimateApp extends StatefulWidget {
+  const MangaEmpireUltimateApp({Key? key}) : super(key: key);
   @override
-  State<MangaEmpireApp> createState() => _MangaEmpireAppState();
+  State<MangaEmpireUltimateApp> createState() => _MangaEmpireUltimateAppState();
 }
 
-class _MangaEmpireAppState extends State<MangaEmpireApp> {
+class _MangaEmpireUltimateAppState extends State<MangaEmpireUltimateApp> {
   Role currentRole = Role.owner;
+  VipTier currentVip = VipTier.emperor;
   String appName = "مانجا العرب";
   String logoUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400";
-  int userPoints = 25400;
+  int userPoints = 50000;
   bool antiHackShield = true;
   String currentUser = "الفاوندر الأسطوري";
   bool isLoggedIn = true;
+
+  bool allowPublicBrowser = false; // المتصفح محجوب وحصري للمالك فقط
+  bool allowExclusiveSourcesToAll = false; // سوات وتيم إكس محجوبة للعامة
+  bool doublePointsEnabled = true; // دبل النقاط مفعل
+
+  String discordUrl = "https://discord.gg/manga-alarab";
+
+  final List<String> auditLogs = [
+    "[أمان] تم تفعيل درع الحماية ضد الاختراق بنجاح.",
+    "[نقاط] تفعيل ميزة مضاعفة النقاط (1000 نقطة لكل 5 فصول) للمالك والداعمين.",
+    "[صلاحيات] حظر المتصفح الداخلي وجعله حصرياً للمالك فقط.",
+  ];
+
+  void addLog(String log) {
+    setState(() {
+      auditLogs.insert(0, "[${DateTime.now().hour}:${DateTime.now().minute}] $log");
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,35 +47,58 @@ class _MangaEmpireAppState extends State<MangaEmpireApp> {
       title: appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF08080E),
-        cardColor: const Color(0xFF13131F),
+        scaffoldBackgroundColor: const Color(0xFF07070C),
+        cardColor: const Color(0xFF11111B),
         primaryColor: const Color(0xFFFFB703),
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFFFFB703),
           secondary: Color(0xFFE63946),
-          surface: Color(0xFF13131F),
         ),
       ),
       home: Directionality(
         textDirection: TextDirection.rtl,
-        child: MainWrapperScreen(
+        child: MainAppDashboard(
           appName: appName,
           logoUrl: logoUrl,
           currentRole: currentRole,
+          currentVip: currentVip,
           userPoints: userPoints,
           antiHackShield: antiHackShield,
           currentUser: currentUser,
           isLoggedIn: isLoggedIn,
-          onRoleChanged: (r) => setState(() => currentRole = r),
-          onNameChanged: (n) => setState(() => appName = n),
-          onLogoChanged: (l) => setState(() => logoUrl = l),
+          allowPublicBrowser: allowPublicBrowser,
+          allowExclusiveSourcesToAll: allowExclusiveSourcesToAll,
+          doublePointsEnabled: doublePointsEnabled,
+          discordUrl: discordUrl,
+          auditLogs: auditLogs,
+          onRoleChanged: (r) {
+            setState(() => currentRole = r);
+            addLog("تم تغيير الرتبة إلى: $r");
+          },
+          onNameChanged: (n) {
+            setState(() => appName = n);
+            addLog("تم تعديل اسم التطبيق إلى: $n");
+          },
+          onLogoChanged: (l) {
+            setState(() => logoUrl = l);
+            addLog("تم تحديث رابط الشعار");
+          },
           onPointsChanged: (p) => setState(() => userPoints += p),
-          onAuthChanged: (logged, name) {
-            setState(() {
-              isLoggedIn = logged;
-              currentUser = name;
-              currentRole = logged ? Role.member : Role.guest;
-            });
+          onDiscordChanged: (d) {
+            setState(() => discordUrl = d);
+            addLog("تم تحديث رابط ديسكورد إلى: $d");
+          },
+          onToggleBrowser: (v) {
+            setState(() => allowPublicBrowser = v);
+            addLog("تم ${v ? 'إتاحة' : 'حظر'} المتصفح للعامة");
+          },
+          onToggleExclusiveSources: (v) {
+            setState(() => allowExclusiveSourcesToAll = v);
+            addLog("تم ${v ? 'إتاحة' : 'حظر'} مصادر سوات وتيم إكس للعامة");
+          },
+          onToggleDoublePoints: (v) {
+            setState(() => doublePointsEnabled = v);
+            addLog("تم ${v ? 'تفعيل' : 'تعطيل'} ميزة دبل النقاط");
           },
         ),
       ),
@@ -63,51 +106,66 @@ class _MangaEmpireAppState extends State<MangaEmpireApp> {
   }
 }
 
-class MainWrapperScreen extends StatefulWidget {
+class MainAppDashboard extends StatefulWidget {
   final String appName;
   final String logoUrl;
   final Role currentRole;
+  final VipTier currentVip;
   final int userPoints;
   final bool antiHackShield;
   final String currentUser;
   final bool isLoggedIn;
+  final bool allowPublicBrowser;
+  final bool allowExclusiveSourcesToAll;
+  final bool doublePointsEnabled;
+  final String discordUrl;
+  final List<String> auditLogs;
   final Function(Role) onRoleChanged;
   final Function(String) onNameChanged;
   final Function(String) onLogoChanged;
   final Function(int) onPointsChanged;
-  final Function(bool, String) onAuthChanged;
+  final Function(String) onDiscordChanged;
+  final Function(bool) onToggleBrowser;
+  final Function(bool) onToggleExclusiveSources;
+  final Function(bool) onToggleDoublePoints;
 
-  const MainWrapperScreen({
+  const MainAppDashboard({
     Key? key,
     required this.appName,
     required this.logoUrl,
     required this.currentRole,
+    required this.currentVip,
     required this.userPoints,
     required this.antiHackShield,
     required this.currentUser,
     required this.isLoggedIn,
+    required this.allowPublicBrowser,
+    required this.allowExclusiveSourcesToAll,
+    required this.doublePointsEnabled,
+    required this.discordUrl,
+    required this.auditLogs,
     required this.onRoleChanged,
     required this.onNameChanged,
     required this.onLogoChanged,
     required this.onPointsChanged,
-    required this.onAuthChanged,
+    required this.onDiscordChanged,
+    required this.onToggleBrowser,
+    required this.onToggleExclusiveSources,
+    required this.onToggleDoublePoints,
   }) : super(key: key);
 
   @override
-  State<MainWrapperScreen> createState() => _MainWrapperScreenState();
+  State<MainAppDashboard> createState() => _MainAppDashboardState();
 }
 
-class _MainWrapperScreenState extends State<MainWrapperScreen> {
+class _MainAppDashboardState extends State<MainAppDashboard> {
   int _navIndex = 0;
-  final List<String> _comments = [
-    "الفاوندر: سيتم إضافة فصول سوات مانجا الليلة حصرياً!",
-    "محرر السولو: تم تنقية وتبييض الفصل 35 بجودة فائقة.",
-    "أوتاكو فخم: شكراً على الترجمة الأسطورية استمروا يا أبطال.",
-  ];
+
+  bool get canSeeBrowser => widget.currentRole == Role.owner || widget.allowPublicBrowser;
 
   String getRoleBadge(Role r) {
     switch (r) {
-      case Role.owner: return "👑 الفاوندر";
+      case Role.owner: return "👑 الفاوندر (المالك)";
       case Role.headAdmin: return "⚡ هيد ادمن";
       case Role.superAdmin: return "🛡️ سوبر ادمن";
       case Role.adminMonth: return "⭐ ادمن الشهر";
@@ -121,383 +179,298 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      _buildHomeScreen(),
-      _buildBrowserAgentScreen(),
-      _buildLeaderboardScreen(),
-      _buildProfileScreen(),
-      if (widget.currentRole == Role.owner) _buildOwnerRoom(),
+    List<Widget> pages = [
+      _buildHomeView(),
+      if (canSeeBrowser) _buildExclusiveBrowserView(),
+      _buildTopSupportersView(),
+      _buildVipPackagesView(),
+      _buildProfileView(),
+      if (widget.currentRole == Role.owner) _buildEngineeringRoom(),
+    ];
+
+    List<BottomNavigationBarItem> navItems = [
+      const BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "الرئيسية"),
+      if (canSeeBrowser)
+        const BottomNavigationBarItem(icon: Icon(Icons.travel_explore), label: "المتصفح"),
+      const BottomNavigationBarItem(icon: Icon(Icons.military_tech), label: "كبار الداعمين"),
+      const BottomNavigationBarItem(icon: Icon(Icons.diamond), label: "باقات VIP"),
+      const BottomNavigationBarItem(icon: Icon(Icons.person), label: "بروفايلي"),
+      if (widget.currentRole == Role.owner)
+        const BottomNavigationBarItem(icon: Icon(Icons.engineering), label: "غرفة الهندسة"),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF10101C),
-        elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.5),
+        backgroundColor: const Color(0xFF0F0F1A),
         title: Row(
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFFFFB703), width: 2),
-                image: DecorationImage(
-                  image: NetworkImage(widget.logoUrl),
-                  fit: BoxFit.cover,
-                ),
+                image: DecorationImage(image: NetworkImage(widget.logoUrl), fit: BoxFit.cover),
               ),
             ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.appName,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFFFFB703)),
-                ),
-                Text(
-                  getRoleBadge(widget.currentRole),
-                  style: const TextStyle(fontSize: 11, color: Colors.white70),
-                ),
+                Text(widget.appName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFFFB703))),
+                Text(getRoleBadge(widget.currentRole), style: const TextStyle(fontSize: 10, color: Colors.white70)),
               ],
             ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.verified_user, color: Colors.cyanAccent),
-            tooltip: "حقوق النشر والملكية",
-            onPressed: () => _showCopyrightDialog(),
-          ),
-          IconButton(
-            icon: Icon(widget.isLoggedIn ? Icons.account_circle : Icons.login, color: const Color(0xFFFFB703)),
-            tooltip: "إدارة الحساب والتسجيل",
-            onPressed: () => _showAuthModal(),
-          ),
           PopupMenuButton<Role>(
-            icon: const Icon(Icons.shield, color: Colors.redAccent),
-            tooltip: "اختبار الرتب",
+            icon: const Icon(Icons.security, color: Colors.amber),
+            tooltip: "تبديل الرتبة للتجربة",
             onSelected: widget.onRoleChanged,
             itemBuilder: (ctx) => Role.values.map((r) => PopupMenuItem(value: r, child: Text(getRoleBadge(r)))).toList(),
           ),
         ],
       ),
       body: pages[_navIndex >= pages.length ? 0 : _navIndex],
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFF5865F2),
+        icon: const Icon(Icons.discord, color: Colors.white),
+        label: const Text("مجتمع ديسكورد"),
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("الرابط المعتمد: ${widget.discordUrl}")),
+          );
+        },
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _navIndex >= pages.length ? 0 : _navIndex,
+        currentIndex: _navIndex >= navItems.length ? 0 : _navIndex,
         onTap: (i) => setState(() => _navIndex = i),
-        backgroundColor: const Color(0xFF0F0F1A),
+        backgroundColor: const Color(0xFF0C0C14),
         selectedItemColor: const Color(0xFFFFB703),
-        unselectedItemColor: Colors.white38,
+        unselectedItemColor: Colors.white30,
         type: BottomNavigationBarType.fixed,
-        items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "الرئيسية"),
-          const BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: "الوكيل"),
-          const BottomNavigationBarItem(icon: Icon(Icons.workspace_premium), label: "المتصدرين"),
-          const BottomNavigationBarItem(icon: Icon(Icons.person), label: "الملف الشخصي"),
-          if (widget.currentRole == Role.owner)
-            const BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings), label: "غرفة المالك"),
-        ],
+        items: navItems,
       ),
     );
   }
 
-  Widget _buildHomeScreen() {
+  Widget _buildHomeView() {
     return ListView(
       padding: const EdgeInsets.all(14),
       children: [
         Container(
-          padding: const EdgeInsets.all(18),
+          height: 130,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6A040F), Color(0xFF03071E)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: const Color(0xFFFFB703).withOpacity(0.4)),
+            borderRadius: BorderRadius.circular(16),
+            image: DecorationImage(image: NetworkImage(widget.logoUrl), fit: BoxFit.cover),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.military_tech, color: Color(0xFFFFB703), size: 28),
-                  SizedBox(width: 8),
-                  Text("قائمة الفخر والإنجازات 🏆", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                "أكثر من 20 مليون مشاهدة هذا الأسبوع! شراكة حصرية مع سوات مانجا وتيم إكس ومانجاليك.",
-                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("رصيدك: ${widget.userPoints} نقطة 🪙", style: const TextStyle(color: Color(0xFFFFB703), fontWeight: FontWeight.bold)),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFB703)),
-                    onPressed: () {
-                      widget.onPointsChanged(500);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("تم استلام المكافأة اليومية 500 نقطة بنجاح!")));
-                    },
-                    child: const Text("مكافأة يومية", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  )
-                ],
-              ),
-            ],
+          alignment: Alignment.bottomRight,
+          padding: const EdgeInsets.all(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(8)),
+            child: const Text("مانجا العرب - الإمبراطورية الرسمية", style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
           ),
         ),
-        const SizedBox(height: 20),
-        const Text("أحدث الفصول الحصرية 🔥", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-        const SizedBox(height: 12),
-        _buildMangaItem("سولو ليفلينج: راجناروك", "الفصل 35", "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400"),
-        _buildMangaItem("عودة سيد الطائفة العظيم", "الفصل 114", "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400"),
+        const SizedBox(height: 16),
+        const Text("الفصول والمصادر الحصرية 🔥", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        _buildMangaCard("سولو ليفلينج: راجناروك", "سوات مانجا (حصري)", true),
+        _buildMangaCard("تيم إكس: صعود الحاكم المطلق", "تيم إكس (حصري)", true),
+        _buildMangaCard("مانجاليك: مغامرات الصياد العظيم", "مانجاليك (عام)", false),
       ],
     );
   }
 
-  Widget _buildMangaItem(String title, String chapter, String img) {
+  Widget _buildMangaCard(String title, String source, bool isExclusive) {
+    bool hasAccess = !isExclusive || widget.currentRole == Role.owner || widget.allowExclusiveSourcesToAll || widget.currentVip != VipTier.none;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFF131322),
+      color: const Color(0xFF12121E),
+      margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(img, width: 50, height: 70, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.menu_book, color: Colors.amber)),
+        leading: const Icon(Icons.auto_stories, color: Colors.amber, size: 36),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(source, style: TextStyle(color: isExclusive ? Colors.redAccent : Colors.greenAccent, fontSize: 12)),
+        trailing: ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: hasAccess ? Colors.amber : Colors.grey.shade800),
+          onPressed: () {
+            if (!hasAccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("هذا المصدر محجوب! خاص بالمالك وباقات VIP فقط.")),
+              );
+            } else {
+              int earnedPoints = widget.doublePointsEnabled ? 1000 : 500;
+              widget.onPointsChanged(earnedPoints);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("تم فتح الفصل بنجاح! كسبت $earnedPoints نقطة 🪙")),
+              );
+            }
+          },
+          child: Text(hasAccess ? "قراءة" : "مقفل 🔒", style: TextStyle(color: hasAccess ? Colors.black : Colors.white60)),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        subtitle: Text(chapter, style: const TextStyle(color: Colors.white60)),
-        trailing: Wrap(
-          spacing: 6,
+      ),
+    );
+  }
+
+  Widget _buildExclusiveBrowserView() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.comment, color: Colors.cyanAccent, size: 20),
-              onPressed: () => _showCommentsSheet(title),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFB703)),
-              onPressed: () {
-                if (widget.currentRole == Role.guest) {
-                  _showGuestAlert();
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (ctx) => ChapterReaderScreen(title: title, chapter: chapter)),
-                  );
-                }
-              },
-              child: const Text("قراءة", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
+            Icon(Icons.lock_open, color: Colors.cyanAccent),
+            SizedBox(width: 8),
+            Text("المتصفح الإمبراطوري وأدوات الوكيل 🤖", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showCommentsSheet(String mangaTitle) {
-    final textCtrl = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF12121E),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
-          child: SizedBox(
-            height: 400,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("تعليقات: $mangaTitle", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.amber)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                  ],
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _comments.length,
-                    itemBuilder: (ctx, i) => Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: const Color(0xFF1A1A2E), borderRadius: BorderRadius.circular(10)),
-                      child: Text(_comments[i], style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: textCtrl,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(hintText: "اكتب تعليقك...", hintStyle: TextStyle(color: Colors.white30)),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.send, color: Colors.amber),
-                      onPressed: () {
-                        if (textCtrl.text.isNotEmpty) {
-                          setState(() => _comments.insert(0, "${widget.currentUser}: ${textCtrl.text}"));
-                          setSheetState(() {});
-                          textCtrl.clear();
-                        }
-                      },
-                    )
-                  ],
-                ),
-                const SizedBox(height: 10),
-              ],
-            ),
+        const SizedBox(height: 6),
+        const Text("أداة حصرية للمالك: سحب الفصول، ترجمة النصوص OCR، وتبييض الفقاعات."),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: [
+            ActionChip(label: const Text("سحب فصول سوات"), onPressed: () {}),
+            ActionChip(label: const Text("تبييض الفقاعات"), onPressed: () {}),
+            ActionChip(label: const Text("ترجمة ذكية"), onPressed: () {}),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(color: const Color(0xFF0F0F18), borderRadius: BorderRadius.circular(12)),
+            alignment: Alignment.center,
+            child: const Text("محرك التصفح السري نشط ويعمل بأوامرك فقط يا فاوندر.", style: TextStyle(color: Colors.white54)),
           ),
         ),
-      ),
+      ],
     );
   }
 
-  void _showGuestAlert() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1B1B2A),
-        title: const Text("تنبيه الضيف ⛔"),
-        content: const Text("رتبة الضيف تتيح تصفح القوائم فقط. يجب تسجيل الدخول لقراءة الفصول."),
-        actions: [
+  Widget _buildTopSupportersView() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        Text("لائحة شرف أكبر الداعمين 🏆", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+        SizedBox(height: 4),
+        Text("الأبطال الذين ساهموا في دعم مانجا العرب:", style: TextStyle(color: Colors.white60, fontSize: 13)),
+        SizedBox(height: 14),
+        ListTile(tileColor: Color(0xFF131322), leading: Text("🥇 1"), title: Text("سياف المانهو"), subtitle: Text("دعم بـ 250,000 نقطة"), trailing: Icon(Icons.diamond, color: Colors.cyanAccent)),
+        SizedBox(height: 8),
+        ListTile(tileColor: Color(0xFF131322), leading: Text("🥈 2"), title: Text("إمبراطور الظلال"), subtitle: Text("دعم بـ 180,000 نقطة"), trailing: Icon(Icons.star, color: Colors.amber)),
+        SizedBox(height: 8),
+        ListTile(tileColor: Color(0xFF131322), leading: Text("🥉 3"), title: Text("صائد الفصول"), subtitle: Text("دعم بـ 95,000 نقطة"), trailing: Icon(Icons.workspace_premium, color: Colors.deepOrange)),
+      ],
+    );
+  }
+
+  Widget _buildVipPackagesView() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text("باقات الدلع والاشتراكات الملكية 💎", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+        const SizedBox(height: 14),
+        _buildPackageCard("باقة التنين الذهبي (Dragon VIP)", "هالة ذهبية للبروفايل + قراءة مصادر سوات وتيم إكس + شارة ذهبية", Colors.amber),
+        const SizedBox(height: 12),
+        _buildPackageCard("باقة إمبراطور المانجا (Emperor Ultra)", "دبل نقاط دائم (1000 نقطة كل 5 فصول) + خط ملون بالتعليقات", Colors.purpleAccent),
+      ],
+    );
+  }
+
+  Widget _buildPackageCard(String name, String perks, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131322),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          const SizedBox(height: 8),
+          Text(perks, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+          const SizedBox(height: 12),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+            style: ElevatedButton.styleFrom(backgroundColor: color),
             onPressed: () {
-              Navigator.pop(ctx);
-              _showAuthModal();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("تم تفعيل ميزات $name بنجاح!")),
+              );
             },
-            child: const Text("تسجيل الدخول الآن", style: TextStyle(color: Colors.black)),
+            child: const Text("تفعيل الباقة", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           )
         ],
       ),
     );
   }
 
-  void _showCopyrightDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF141422),
-        title: const Text("حقوق الملكية والنشر (DMCA)"),
-        content: const Text(
-          "• جميع الحقوق محفوظة لتطبيق مانجا العرب وشركائه الرسميين.\n\n"
-          "• الأعمال تعود ملكيتها لمؤلفيها وناشريها الأصليين والترجمة لخدمة القارئ العربي غير الربحي.",
-          style: TextStyle(fontSize: 13, height: 1.5, color: Colors.white70),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("موافق", style: TextStyle(color: Colors.amber)))],
-      ),
-    );
-  }
-
-  void _showAuthModal() {
-    int tab = 0;
-    final emailCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setMState) => AlertDialog(
-          backgroundColor: const Color(0xFF141422),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              TextButton(onPressed: () => setMState(() => tab = 0), child: Text("دخول", style: TextStyle(color: tab == 0 ? Colors.amber : Colors.white54))),
-              TextButton(onPressed: () => setMState(() => tab = 1), child: Text("إنشاء حساب", style: TextStyle(color: tab == 1 ? Colors.amber : Colors.white54))),
-              TextButton(onPressed: () => setMState(() => tab = 2), child: Text("استعادة", style: TextStyle(color: tab == 2 ? Colors.amber : Colors.white54))),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: emailCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: "البريد الإلكتروني")),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
-                onPressed: () {
-                  widget.onAuthChanged(true, emailCtrl.text.isEmpty ? "أوتاكو ذهبي" : emailCtrl.text.split('@')[0]);
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("تم بنجاح!")));
-                },
-                child: Text(tab == 0 ? "دخول" : tab == 1 ? "إنشاء حساب" : "إرسال الرابط", style: const TextStyle(color: Colors.black)),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBrowserAgentScreen() {
-    final cmdCtrl = TextEditingController();
-    final List<String> logs = ["الوكيل: جاهز لتبييض الفقاعات وسحب فصول سوات ومانجاليك وتيم إكس."];
-
-    return StatefulBuilder(
-      builder: (ctx, setBState) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("المتصفح وأدوات المالك والوكيل الذكي 🤖", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              children: [
-                ActionChip(label: const Text("تبييض الفقاعات"), onPressed: () => setBState(() => logs.insert(0, "تم مسح النصوص بنجاح."))),
-                ActionChip(label: const Text("ترجمة OCR"), onPressed: () => setBState(() => logs.insert(0, "تمت ترجمة الصفحة للعربية."))),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFF11111E), borderRadius: BorderRadius.circular(12)),
-                child: ListView.builder(
-                  itemCount: logs.length,
-                  itemBuilder: (ctx, i) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(logs[i], style: const TextStyle(color: Colors.white70))),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                Expanded(child: TextField(controller: cmdCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(hintText: "أمر الوكيل..."))),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.cyanAccent),
-                  onPressed: () {
-                    if (cmdCtrl.text.isNotEmpty) {
-                      setBState(() => logs.insert(0, "الأمر: ${cmdCtrl.text} (جاري التنفيذ...)"));
-                      cmdCtrl.clear();
-                    }
-                  },
-                )
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLeaderboardScreen() {
+  Widget _buildProfileView() {
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: const [
-        Text("لوحة الصدارة 👑", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
-        SizedBox(height: 12),
-        ListTile(tileColor: Color(0xFF131320), leading: Text("🥇"), title: Text("الفاوندر الأسطوري"), subtitle: Text("المشرف العام")),
-        ListTile(tileColor: Color(0xFF131320), leading: Text("🥈"), title: Text("سياف الظلال"), subtitle: Text("داعم بـ 100,000 نقطة")),
+      children: [
+        ListTile(
+          tileColor: const Color(0xFF131322),
+          leading: CircleAvatar(backgroundImage: NetworkImage(widget.logoUrl)),
+          title: Text(widget.currentUser, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+          subtitle: Text("الرتبة: ${getRoleBadge(widget.currentRole)} | الرصيد: ${widget.userPoints} 🪙"),
+        ),
+        const SizedBox(height: 14),
+        const Text("الميزات النشطة بحسابك:", style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        ListTile(
+          tileColor: const Color(0xFF131322),
+          title: const Text("ميزة دبل النقاط"),
+          trailing: Text(widget.doublePointsEnabled ? "مفعلة (1000 نقطة / 5 فصول)" : "معطلة", style: const TextStyle(color: Colors.greenAccent)),
+        ),
       ],
     );
   }
 
-  Widget _buildProfileScreen() {
+  Widget _buildEngineeringRoom() {
+    final discordCtrl = TextEditingController(text: widget.discordUrl);
+    final nameCtrl = TextEditingController(text: widget.appName);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Container(
+        const Text("غرفة الهندسة والتحكم المطلق (للمالك فقط) ⚙️👑", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+        const SizedBox(height: 14),
+        SwitchListTile(
+          tileColor: const Color(0xFF141424),
+          title: const Text("إتاحة المتصفح والوكيل للأعضاء"),
+          subtitle: const Text("حالياً مخصص للمالك فقط ومحجوب عن باقي الرتب"),
+          value: widget.allowPublicBrowser,
+          onChanged: widget.onToggleBrowser,
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          tileColor: const Color(0xFF141424),
+          title: const Text("إتاحة مصادر (سوات وتيم إكس) للجميع"),
+          subtitle: const Text("حالياً محصورة للمالك والمشتركين فقط"),
+          value: widget.allowExclusiveSourcesToAll,
+          onChanged: widget.onToggleExclusiveSources,
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          tileColor: const Color(0xFF141424),
+          title: const Text("مضاعفة النقاط (دبل نقاط)"),
+          subtitle: const Text("1000 نقطة لكل 5 فصول بدلاً من 10"),
+          value: widget.doublePointsEnabled,
+          onChanged: widget.onToggleDoublePoints,
+        ),
+        const SizedBox(height: 8),
+        ListTile(
+          tileColor: const Color(0xFF141424),
+          title: const Text("تعديل رابط الديسكورد المعتمد"),
+          subtitle: Text(widget.discordUrl),
+          trailing: const Icon(Icons.edit, color: Colors.amber),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: const Color(0xFF1A1A2E),
+                title: const Text("رابط ديسكورد الجديد:"),
+                content: TextField(controller: discordCtrl, style: const Tex
