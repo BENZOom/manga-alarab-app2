@@ -1,0 +1,364 @@
+name: Build Manga Al-Arab APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Generate Manga Al-Arab Project
+        run: |
+          flutter create --org com.mangaalarab.app --project-name manga_alarab app_build
+          cd app_build
+          cat << 'EOF' > lib/main.dart
+          import 'package:flutter/material.dart';
+
+          void main() {
+            runApp(const MangaAlArabApp());
+          }
+
+          enum Role { owner, headAdmin, superAdmin, adminMonth, admin, translator, editor, member, guest }
+
+          class MangaAlArabApp extends StatefulWidget {
+            const MangaAlArabApp({Key? key}) : super(key: key);
+            @override
+            State<MangaAlArabApp> createState() => _MangaAlArabAppState();
+          }
+
+          class _MangaAlArabAppState extends State<MangaAlArabApp> {
+            Role currentRole = Role.owner;
+            String appName = "مانجا العرب";
+            int userPoints = 12500;
+            bool antiHackShield = true;
+            String floatingUrl = "https://discord.gg/manga-alarab";
+
+            @override
+            Widget build(BuildContext context) {
+              return MaterialApp(
+                title: appName,
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData.dark().copyWith(
+                  scaffoldBackgroundColor: const Color(0xFF0D0D15),
+                  primaryColor: Colors.amber,
+                ),
+                home: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: HomeScreen(
+                    appName: appName,
+                    currentRole: currentRole,
+                    userPoints: userPoints,
+                    antiHackShield: antiHackShield,
+                    floatingUrl: floatingUrl,
+                    onRoleChanged: (r) => setState(() => currentRole = r),
+                    onNameChanged: (n) => setState(() => appName = n),
+                  ),
+                ),
+              );
+            }
+          }
+
+          class HomeScreen extends StatefulWidget {
+            final String appName;
+            final Role currentRole;
+            final int userPoints;
+            final bool antiHackShield;
+            final String floatingUrl;
+            final Function(Role) onRoleChanged;
+            final Function(String) onNameChanged;
+
+            const HomeScreen({
+              Key? key,
+              required this.appName,
+              required this.currentRole,
+              required this.userPoints,
+              required this.antiHackShield,
+              required this.floatingUrl,
+              required this.onRoleChanged,
+              required this.onNameChanged,
+            }) : super(key: key);
+
+            @override
+            State<HomeScreen> createState() => _HomeScreenState();
+          }
+
+          class _HomeScreenState extends State<HomeScreen> {
+            int _navIndex = 0;
+
+            String getRoleTitle(Role r) {
+              switch (r) {
+                case Role.owner: return "👑 المالك والفاوندر";
+                case Role.headAdmin: return "⚡ هيد ادمن";
+                case Role.superAdmin: return "🛡️ سوبر ادمن";
+                case Role.adminMonth: return "⭐ ادمن الشهر";
+                case Role.admin: return "🔰 ادمن";
+                case Role.translator: return "✍️ مترجم";
+                case Role.editor: return "🎨 محرر";
+                case Role.member: return "👤 عضو";
+                case Role.guest: return "👀 ضيف";
+              }
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              final pages = [
+                _buildMangaList(),
+                _buildBrowserAgent(),
+                _buildLeaderboard(),
+                _buildProfile(),
+                if (widget.currentRole == Role.owner) _buildOwnerDashboard(),
+              ];
+
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: const Color(0xFF161622),
+                  title: Text(widget.appName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber)),
+                  actions: [
+                    PopupMenuButton<Role>(
+                      icon: const Icon(Icons.security, color: Colors.cyanAccent),
+                      tooltip: "تبديل الرتبة للتجربة",
+                      onSelected: widget.onRoleChanged,
+                      itemBuilder: (ctx) => Role.values.map((r) => PopupMenuItem(value: r, child: Text(getRoleTitle(r)))).toList(),
+                    ),
+                  ],
+                ),
+                body: pages[_navIndex >= pages.length ? 0 : _navIndex],
+                floatingActionButton: FloatingActionButton.extended(
+                  backgroundColor: Colors.indigoAccent,
+                  icon: const Icon(Icons.link),
+                  label: const Text("ديسكورد"),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("جاري فتح الرابط: ${widget.floatingUrl}")),
+                    );
+                  },
+                ),
+                bottomNavigationBar: BottomNavigationBar(
+                  currentIndex: _navIndex >= pages.length ? 0 : _navIndex,
+                  onTap: (i) => setState(() => _navIndex = i),
+                  backgroundColor: const Color(0xFF161622),
+                  selectedItemColor: Colors.amber,
+                  unselectedItemColor: Colors.white54,
+                  type: BottomNavigationBarType.fixed,
+                  items: [
+                    const BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "الرئيسية"),
+                    const BottomNavigationBarItem(icon: Icon(Icons.language), label: "المتصفح والوكيل"),
+                    const BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: "المتصدرين"),
+                    const BottomNavigationBarItem(icon: Icon(Icons.person), label: "بروفايلي"),
+                    if (widget.currentRole == Role.owner)
+                      const BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings), label: "المالك"),
+                  ],
+                ),
+              );
+            }
+
+            Widget _buildMangaList() {
+              return ListView(
+                padding: const EdgeInsets.all(12),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Colors.deepPurple, Colors.indigo]),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("قائمة الفخر والتميّز 🏆", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        const Text("تم كسر حاجز 20 مليون دخول للتطبيق هذا الأسبوع بفضل دعمكم!"),
+                        const SizedBox(height: 8),
+                        Text("رتبتك النشطة: ${getRoleTitle(widget.currentRole)}", style: const TextStyle(color: Colors.amberAccent)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text("أحدث الفصول المترجمة (سوات - مانجاليك - تيم إكس)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  _buildMangaCard("سولو ليفلينج: راجناروك", "الفصل 34", "https://via.placeholder.com/150"),
+                  _buildMangaCard("عودة سيد الطائفة العظيم", "الفصل 112", "https://via.placeholder.com/150"),
+                ],
+              );
+            }
+
+            Widget _buildMangaCard(String title, String chapter, String img) {
+              return Card(
+                color: const Color(0xFF1E1E2C),
+                child: ListTile(
+                  leading: const Icon(Icons.book, size: 40, color: Colors.amber),
+                  title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(chapter, style: const TextStyle(color: Colors.white70)),
+                  trailing: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+                    onPressed: () {
+                      if (widget.currentRole == Role.guest) {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: const Color(0xFF1E1E2C),
+                            title: const Text("تنبيه الضيف"),
+                            content: const Text("عذراً، الضيف يستطيع التصفح فقط! يجب تسجيل الدخول لقراءة الفصول."),
+                            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("موافق"))],
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("تم فتح $title بنجاح!")),
+                        );
+                      }
+                    },
+                    child: const Text("قراءة", style: TextStyle(color: Colors.black)),
+                  ),
+                ),
+              );
+            }
+
+            Widget _buildBrowserAgent() {
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  const Text("المتصفح الذكي والوكيل الداخلي 🤖", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
+                  const SizedBox(height: 8),
+                  const Text("استخدم أدوات المالك لسحب الفصول من المواقع ومسح الفقاعات وترجمتها فوراً."),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ActionChip(label: const Text("نسخ الصور"), onPressed: () {}),
+                      ActionChip(label: const Text("تبييض الفقاعات (مسح النصوص)"), onPressed: () {}),
+                      ActionChip(label: const Text("ترجمة فورية (OCR)"), onPressed: () {}),
+                      ActionChip(label: const Text("سحب جميع الفصول"), onPressed: () {}),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF161622),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.cyanAccent.withOpacity(0.3)),
+                      ),
+                      child: const Center(
+                        child: Text("الوكيل جاهز في انتظار أوامرك لسحب الفصول...", style: TextStyle(color: Colors.white60)),
+                      ),
+                    ),
+                  )
+                ],
+              );
+            }
+
+            Widget _buildLeaderboard() {
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: const [
+                  Text("لوحة المتصدرين 👑", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.amber)),
+                  SizedBox(height: 12),
+                  ListTile(tileColor: Color(0xFF1E1E2C), leading: Text("🥇 1"), title: Text("أحمد فخري"), subtitle: Text("قراءة 4,200 فصل")),
+                  SizedBox(height: 8),
+                  ListTile(tileColor: Color(0xFF1E1E2C), leading: Text("🥈 2"), title: Text("سلطان الأوتاكو"), subtitle: Text("قراءة 3,800 فصل")),
+                  SizedBox(height: 8),
+                  ListTile(tileColor: Color(0xFF1E1E2C), leading: Text("🥉 3"), title: Text("سفاح المانهو"), subtitle: Text("دعم بـ 50,000 نقطة")),
+                ],
+              );
+            }
+
+            Widget _buildProfile() {
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrangeAccent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text("بنر البروفايل (يدعم GIF متحرك)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    tileColor: const Color(0xFF1E1E2C),
+                    leading: const CircleAvatar(backgroundColor: Colors.amber, child: Icon(Icons.person, color: Colors.black)),
+                    title: Text("المالك (الفاوندر)", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber)),
+                    subtitle: Text("الرصيد: ${widget.userPoints} نقطة"),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text("إحصائيات العمل والنشاط:", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const ListTile(title: Text("ساعات مكافحة التخريب"), trailing: Text("142 ساعة", style: TextStyle(color: Colors.cyanAccent))),
+                  const ListTile(title: Text("ساعات القراءة الإجمالية"), trailing: Text("89 ساعة", style: TextStyle(color: Colors.amber))),
+                  const ListTile(title: Text("عدد الفصول المكتملة"), trailing: Text("1,420 فصل")),
+                ],
+              );
+            }
+
+            Widget _buildOwnerDashboard() {
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  const Text("غرفة عمليات المالك والفاوندر 👑", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    tileColor: const Color(0xFF1E1E2C),
+                    title: const Text("نظام الحماية القصوى ضد الهكر"),
+                    subtitle: const Text("فحص ومنع أي محاولات اختراق أو تخريب"),
+                    value: widget.antiHackShield,
+                    onChanged: (v) {},
+                  ),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    tileColor: const Color(0xFF1E1E2C),
+                    title: const Text("تعديل اسم التطبيق الفوري"),
+                    subtitle: Text("الاسم الحالي: ${widget.appName}"),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.amber),
+                      onPressed: () {
+                        widget.onNameChanged("مانجا العرب - الإمبراطورية");
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const ListTile(
+                    tileColor: const Color(0xFF1E1E2C),
+                    title: Text("سجل العمليات الشامل (Audit Logs)"),
+                    subtitle: Text("مراقبة جميع عمليات الباند والتايم أوت وتوزيع النقاط"),
+                    trailing: Icon(Icons.receipt_long, color: Colors.cyanAccent),
+                  ),
+                  const SizedBox(height: 8),
+                  const ListTile(
+                    tileColor: const Color(0xFF1E1E2C),
+                    title: Text("منح صلاحيات وتخصيص الأعضاء"),
+                    subtitle: Text("إعطاء صلاحية الباند، أو اختيار من 100 خط لأي عضو"),
+                    trailing: Icon(Icons.tune, color: Colors.orangeAccent),
+                  ),
+                ],
+              );
+            }
+          }
+          EOF
+          flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload APK to Phone
+        uses: actions/upload-artifact@v4
+        with:
+          name: Manga-AlArab-Release-APK
+          path: app_build/build/app/outputs/flutter-apk/app-release.apk
