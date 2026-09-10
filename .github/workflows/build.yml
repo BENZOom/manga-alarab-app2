@@ -24,16 +24,18 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Compile Manga Al-Arab APK
+      - name: Fast Compile APK
         run: |
+          export GRADLE_OPTS="-Xmx3072m -XX:MaxMetaspaceSize=1024m"
+          flutter config --no-analytics
           flutter create --org com.mangaalarab.app --project-name manga_alarab app_project
           cp -f lib/main.dart app_project/lib/main.dart
           cd app_project
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Manga-AlArab-Ultimate-APK
-          path: app_project/build/app/outputs/flutter-apk/app-release.apk
+          path: app_project/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
