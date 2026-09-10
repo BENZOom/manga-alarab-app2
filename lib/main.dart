@@ -23,16 +23,16 @@ class _MangaEmpireUltimateAppState extends State<MangaEmpireUltimateApp> {
   String currentUser = "الفاوندر الأسطوري";
   bool isLoggedIn = true;
 
-  bool allowPublicBrowser = false; // المتصفح محجوب وحصري للمالك فقط
-  bool allowExclusiveSourcesToAll = false; // سوات وتيم إكس محجوبة للعامة
-  bool doublePointsEnabled = true; // دبل النقاط مفعل
+  bool allowPublicBrowser = false;
+  bool allowExclusiveSourcesToAll = false;
+  bool doublePointsEnabled = true;
 
   String discordUrl = "https://discord.gg/manga-alarab";
 
   final List<String> auditLogs = [
-    "[أمان] تم تفعيل درع الحماية ضد الاختراق بنجاح.",
-    "[نقاط] تفعيل ميزة مضاعفة النقاط (1000 نقطة لكل 5 فصول) للمالك والداعمين.",
-    "[صلاحيات] حظر المتصفح الداخلي وجعله حصرياً للمالك فقط.",
+    "[أمان] تم تفعيل درع الحماية بنجاح.",
+    "[نقاط] تفعيل ميزة مضاعفة النقاط (1000 نقطة لكل 5 فصول) للمالك.",
+    "[صلاحيات] حظر المتصفح الداخلي وجعله حصرياً للمالك.",
   ];
 
   void addLog(String log) {
@@ -90,15 +90,15 @@ class _MangaEmpireUltimateAppState extends State<MangaEmpireUltimateApp> {
           },
           onToggleBrowser: (v) {
             setState(() => allowPublicBrowser = v);
-            addLog("تم ${v ? 'إتاحة' : 'حظر'} المتصفح للعامة");
+            addLog("تم ${v ? 'إتاحة' : 'حظر'} المتصفح");
           },
           onToggleExclusiveSources: (v) {
             setState(() => allowExclusiveSourcesToAll = v);
-            addLog("تم ${v ? 'إتاحة' : 'حظر'} مصادر سوات وتيم إكس للعامة");
+            addLog("تم ${v ? 'إتاحة' : 'حظر'} المصادر الحصرية");
           },
           onToggleDoublePoints: (v) {
             setState(() => doublePointsEnabled = v);
-            addLog("تم ${v ? 'تفعيل' : 'تعطيل'} ميزة دبل النقاط");
+            addLog("تم ${v ? 'تفعيل' : 'تعطيل'} دبل النقاط");
           },
         ),
       ),
@@ -189,14 +189,14 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
     ];
 
     List<BottomNavigationBarItem> navItems = [
-      const BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "الرئيسية"),
+      const BottomNavigationBarItem(icon: Icon(Icons.home), label: "الرئيسية"),
       if (canSeeBrowser)
-        const BottomNavigationBarItem(icon: Icon(Icons.travel_explore), label: "المتصفح"),
-      const BottomNavigationBarItem(icon: Icon(Icons.military_tech), label: "كبار الداعمين"),
-      const BottomNavigationBarItem(icon: Icon(Icons.diamond), label: "باقات VIP"),
+        const BottomNavigationBarItem(icon: Icon(Icons.language), label: "المتصفح"),
+      const BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: "الداعمين"),
+      const BottomNavigationBarItem(icon: Icon(Icons.star), label: "باقات VIP"),
       const BottomNavigationBarItem(icon: Icon(Icons.person), label: "بروفايلي"),
       if (widget.currentRole == Role.owner)
-        const BottomNavigationBarItem(icon: Icon(Icons.engineering), label: "غرفة الهندسة"),
+        const BottomNavigationBarItem(icon: Icon(Icons.build), label: "الهندسة"),
     ];
 
     return Scaffold(
@@ -225,8 +225,8 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
         ),
         actions: [
           PopupMenuButton<Role>(
-            icon: const Icon(Icons.security, color: Colors.amber),
-            tooltip: "تبديل الرتبة للتجربة",
+            icon: const Icon(Icons.shield, color: Colors.amber),
+            tooltip: "تبديل الرتبة",
             onSelected: widget.onRoleChanged,
             itemBuilder: (ctx) => Role.values.map((r) => PopupMenuItem(value: r, child: Text(getRoleBadge(r)))).toList(),
           ),
@@ -235,7 +235,7 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
       body: pages[_navIndex >= pages.length ? 0 : _navIndex],
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF5865F2),
-        icon: const Icon(Icons.discord, color: Colors.white),
+        icon: const Icon(Icons.forum, color: Colors.white),
         label: const Text("مجتمع ديسكورد"),
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -290,7 +290,7 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
       color: const Color(0xFF12121E),
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        leading: const Icon(Icons.auto_stories, color: Colors.amber, size: 36),
+        leading: const Icon(Icons.menu_book, color: Colors.amber, size: 36),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(source, style: TextStyle(color: isExclusive ? Colors.redAccent : Colors.greenAccent, fontSize: 12)),
         trailing: ElevatedButton(
@@ -304,7 +304,7 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
               int earnedPoints = widget.doublePointsEnabled ? 1000 : 500;
               widget.onPointsChanged(earnedPoints);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("تم فتح الفصل بنجاح! كسبت $earnedPoints نقطة 🪙")),
+                SnackBar(content: Text("تم فتح الفصل! كسبت $earnedPoints نقطة 🪙")),
               );
             }
           },
@@ -322,11 +322,11 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
           children: [
             Icon(Icons.lock_open, color: Colors.cyanAccent),
             SizedBox(width: 8),
-            Text("المتصفح الإمبراطوري وأدوات الوكيل 🤖", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
+            Text("المتصفح وأدوات الوكيل 🤖", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
           ],
         ),
         const SizedBox(height: 6),
-        const Text("أداة حصرية للمالك: سحب الفصول، ترجمة النصوص OCR، وتبييض الفقاعات."),
+        const Text("أداة حصرية للمالك: سحب الفصول، ترجمة النصوص، وتبييض الفقاعات."),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -341,7 +341,7 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
           child: Container(
             decoration: BoxDecoration(color: const Color(0xFF0F0F18), borderRadius: BorderRadius.circular(12)),
             alignment: Alignment.center,
-            child: const Text("محرك التصفح السري نشط ويعمل بأوامرك فقط يا فاوندر.", style: TextStyle(color: Colors.white54)),
+            child: const Text("المتصفح السري نشط بأوامر الفاوندر فقط.", style: TextStyle(color: Colors.white54)),
           ),
         ),
       ],
@@ -354,13 +354,13 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
       children: const [
         Text("لائحة شرف أكبر الداعمين 🏆", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
         SizedBox(height: 4),
-        Text("الأبطال الذين ساهموا في دعم مانجا العرب:", style: TextStyle(color: Colors.white60, fontSize: 13)),
+        Text("الأبطال الذين ساهموا في دعم التطبيق:", style: TextStyle(color: Colors.white60, fontSize: 13)),
         SizedBox(height: 14),
-        ListTile(tileColor: Color(0xFF131322), leading: Text("🥇 1"), title: Text("سياف المانهو"), subtitle: Text("دعم بـ 250,000 نقطة"), trailing: Icon(Icons.diamond, color: Colors.cyanAccent)),
+        ListTile(tileColor: Color(0xFF131322), leading: Text("🥇 1"), title: Text("سياف المانهو"), subtitle: Text("دعم بـ 250,000 نقطة"), trailing: Icon(Icons.star, color: Colors.cyanAccent)),
         SizedBox(height: 8),
         ListTile(tileColor: Color(0xFF131322), leading: Text("🥈 2"), title: Text("إمبراطور الظلال"), subtitle: Text("دعم بـ 180,000 نقطة"), trailing: Icon(Icons.star, color: Colors.amber)),
         SizedBox(height: 8),
-        ListTile(tileColor: Color(0xFF131322), leading: Text("🥉 3"), title: Text("صائد الفصول"), subtitle: Text("دعم بـ 95,000 نقطة"), trailing: Icon(Icons.workspace_premium, color: Colors.deepOrange)),
+        ListTile(tileColor: Color(0xFF131322), leading: Text("🥉 3"), title: Text("صائد الفصول"), subtitle: Text("دعم بـ 95,000 نقطة"), trailing: Icon(Icons.star, color: Colors.deepOrange)),
       ],
     );
   }
@@ -369,11 +369,11 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text("باقات الدلع والاشتراكات الملكية 💎", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
+        const Text("باقات الدلع والاشتراكات 💎", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber)),
         const SizedBox(height: 14),
-        _buildPackageCard("باقة التنين الذهبي (Dragon VIP)", "هالة ذهبية للبروفايل + قراءة مصادر سوات وتيم إكس + شارة ذهبية", Colors.amber),
+        _buildPackageCard("باقة التنين الذهبي (Dragon VIP)", "هالة ذهبية + مصادر سوات وتيم إكس + شارة خاصة", Colors.amber),
         const SizedBox(height: 12),
-        _buildPackageCard("باقة إمبراطور المانجا (Emperor Ultra)", "دبل نقاط دائم (1000 نقطة كل 5 فصول) + خط ملون بالتعليقات", Colors.purpleAccent),
+        _buildPackageCard("باقة إمبراطور المانجا (Emperor Ultra)", "دبل نقاط دائم (1000 نقطة كل 5 فصول) + خط ملون", Colors.purpleAccent),
       ],
     );
   }
@@ -436,20 +436,19 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text("غرفة الهندسة والتحكم المطلق (للمالك فقط) ⚙️👑", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+        const Text("غرفة الهندسة والتحكم (للمالك فقط) ⚙️👑", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
         const SizedBox(height: 14),
         SwitchListTile(
           tileColor: const Color(0xFF141424),
-          title: const Text("إتاحة المتصفح والوكيل للأعضاء"),
-          subtitle: const Text("حالياً مخصص للمالك فقط ومحجوب عن باقي الرتب"),
+          title: const Text("إتاحة المتصفح للأعضاء"),
+          subtitle: const Text("حالياً مخصص للمالك فقط ومحجوب عن الباقين"),
           value: widget.allowPublicBrowser,
           onChanged: widget.onToggleBrowser,
         ),
         const SizedBox(height: 8),
         SwitchListTile(
           tileColor: const Color(0xFF141424),
-          title: const Text("إتاحة مصادر (سوات وتيم إكس) للجميع"),
-          subtitle: const Text("حالياً محصورة للمالك والمشتركين فقط"),
+          title: const Text("إتاحة مصادر سوات وتيم إكس للجميع"),
           value: widget.allowExclusiveSourcesToAll,
           onChanged: widget.onToggleExclusiveSources,
         ),
@@ -464,7 +463,7 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
         const SizedBox(height: 8),
         ListTile(
           tileColor: const Color(0xFF141424),
-          title: const Text("تعديل رابط الديسكورد المعتمد"),
+          title: const Text("تعديل رابط الديسكورد"),
           subtitle: Text(widget.discordUrl),
           trailing: const Icon(Icons.edit, color: Colors.amber),
           onTap: () {
@@ -473,4 +472,39 @@ class _MainAppDashboardState extends State<MainAppDashboard> {
               builder: (ctx) => AlertDialog(
                 backgroundColor: const Color(0xFF1A1A2E),
                 title: const Text("رابط ديسكورد الجديد:"),
-                content: TextField(controller: discordCtrl, style: const Tex
+                content: TextField(controller: discordCtrl, style: const TextStyle(color: Colors.white)),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () {
+                      widget.onDiscordChanged(discordCtrl.text);
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text("تحديث"),
+                  )
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        ListTile(
+          tileColor: const Color(0xFF141424),
+          title: const Text("تعديل اسم التطبيق"),
+          subtitle: Text(widget.appName),
+          trailing: const Icon(Icons.edit, color: Colors.cyanAccent),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: const Color(0xFF1A1A2E),
+                title: const Text("اسم التطبيق الجديد:"),
+                content: TextField(controller: nameCtrl, style: const TextStyle(color: Colors.white)),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () {
+                      widget.onNameChanged(nameCtrl.text);
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text("تطبيق"),
+                  )
+               
