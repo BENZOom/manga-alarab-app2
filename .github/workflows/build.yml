@@ -193,13 +193,13 @@ jobs:
                   const SizedBox(height: 12),
                   const Text("أحدث الفصول المترجمة (سوات - مانجاليك - تيم إكس)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
-                  _buildMangaCard("سولو ليفلينج: راجناروك", "الفصل 34", "https://via.placeholder.com/150"),
-                  _buildMangaCard("عودة سيد الطائفة العظيم", "الفصل 112", "https://via.placeholder.com/150"),
+                  _buildMangaCard("سولو ليفلينج: راجناروك", "الفصل 34"),
+                  _buildMangaCard("عودة سيد الطائفة العظيم", "الفصل 112"),
                 ],
               );
             }
 
-            Widget _buildMangaCard(String title, String chapter, String img) {
+            Widget _buildMangaCard(String title, String chapter) {
               return Card(
                 color: const Color(0xFF1E1E2C),
                 child: ListTile(
@@ -232,26 +232,29 @@ jobs:
             }
 
             Widget _buildBrowserAgent() {
-              return Padding(
+              return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                children: [
-                  const Text("المتصفح الذكي والوكيل الداخلي 🤖", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
-                  const SizedBox(height: 8),
-                  const Text("استخدم أدوات المالك لسحب الفصول من المواقع ومسح الفقاعات وترجمتها فوراً."),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ActionChip(label: const Text("نسخ الصور"), onPressed: () {}),
-                      ActionChip(label: const Text("تبييض الفقاعات (مسح النصوص)"), onPressed: () {}),
-                      ActionChip(label: const Text("ترجمة فورية (OCR)"), onPressed: () {}),
-                      ActionChip(label: const Text("سحب جميع الفصول"), onPressed: () {}),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("المتصفح الذكي والوكيل الداخلي 🤖", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
+                    const SizedBox(height: 8),
+                    const Text("استخدم أدوات المالك لسحب الفصول من المواقع ومسح الفقاعات وترجمتها فوراً."),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ActionChip(label: const Text("نسخ الصور"), onPressed: () {}),
+                        ActionChip(label: const Text("تبييض الفقاعات"), onPressed: () {}),
+                        ActionChip(label: const Text("ترجمة فورية (OCR)"), onPressed: () {}),
+                        ActionChip(label: const Text("سحب جميع الفصول"), onPressed: () {}),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      height: 180,
+                      width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: const Color(0xFF161622),
@@ -262,8 +265,8 @@ jobs:
                         child: Text("الوكيل جاهز في انتظار أوامرك لسحب الفصول...", style: TextStyle(color: Colors.white60)),
                       ),
                     ),
-                  )
-                ],
+                  ],
+                ),
               );
             }
 
